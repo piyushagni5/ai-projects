@@ -238,6 +238,21 @@
                 hljs.highlightAll();
             });
 
+            document.getElementById("generate-tests-btn").addEventListener("click", async () => {
+                if (selectedSnippetId === null) {
+                    alert("Please select a snippet first.");
+                    return;
+                }
+                const response = await fetch(`/generate-tests?snippet_id=${selectedSnippetId}`, {
+                    method: "POST"
+                });
+                const tests = await response.text();
+                const tests_ = tests.replace(/^"|"$/g, '');
+                const formattedTests = tests_.replace(/\\n/g, "\n");
+                testDisplay.textContent = formattedTests;
+                hljs.highlightAll();
+            });
+
             loadSnippets();
         });
     </script>

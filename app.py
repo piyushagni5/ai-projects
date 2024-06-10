@@ -35,7 +35,8 @@ class Snippet(BaseModel):
     description: str
     language: str
     code: str
-    
+    tests: Optional[str] = None  # To store generated test cases
+
 class Feedback(BaseModel):
     snippet_id: int
     feedback: str
@@ -123,3 +124,14 @@ async def improve_snippet(feedback: Feedback):
     improved_code = utils.extract_function_content(response.choices[0].message.content, snippet.language)
     snippet.code = improved_code
     return snippet
+
+@app.post("/generate-tests", response_model=str)
+async def generate_tests_endpoint(snippet_id: int):
+    snippet = next((s for s in snippets_db if s.id == snippet_id), None)
+    if snippet is None:
+        raise HTTPException(status_code=404, detail="Snippet not found")
+
+    tests = utils.generate_tests(snippet.code, snippet.language)
+    snippet.tests = tests
+    # print('tests :', tests)
+    return tests
