@@ -42,6 +42,11 @@ class Feedback(BaseModel):
     feedback: str
     language: str
 
+class TestCaseFeedback(BaseModel):
+    snippet_id: int
+    feedback: str
+    language: str
+    
 # In-memory database
 snippets_db = []
 
@@ -131,3 +136,19 @@ async def generate_tests_endpoint(snippet_id: int):
     tests = utils.generate_tests(snippet.code, snippet.language)
     snippet.tests = tests
     return tests
+
+@app.post("/test-case-feedback", response_model=str)
+async def improve_snippet(feedback: TestCaseFeedback):
+    snippet = next((s for s in snippets_db if s.id == feedback.snippet_id), None)
+    print(snippet)
+    if snippet is None:
+        raise HTTPException(status_code=404, detail="Snippet not found")
+
+    response = openai.chat.completions.create(
+        model="gpt-3.5-turbo",
+        messages=[
+            {"role": "system", "content": "You are a helpful assistant."},
+            {"role": "user", "content": f"Generate 5 test cases for the following {snippet.language} and code:\n\n{snippet.code} based on this feedback: {feedback.feedback} \n. Strictly follow the following format for the test cases. for eg: 1. Test Case 1: \n Input: `` \n Output: ``"}
+        ]
+    )
+    return utils.convert_to_assert_statements(response.choices[0].message.content, snippet.code, snippet.language)

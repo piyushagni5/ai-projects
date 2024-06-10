@@ -93,5 +93,4 @@ def generate_tests(code: str, language: str):
         ]
     )
     generated_test = response.choices[0].message.content
-    print('generated test cases :', generated_test)
     return convert_to_assert_statements(generated_test, code, language)
