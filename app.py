@@ -46,7 +46,7 @@ class TestCaseFeedback(BaseModel):
     snippet_id: int
     feedback: str
     language: str
-    
+
 # In-memory database
 snippets_db = []
 
@@ -152,3 +152,31 @@ async def improve_snippet(feedback: TestCaseFeedback):
         ]
     )
     return utils.convert_to_assert_statements(response.choices[0].message.content, snippet.code, snippet.language)
+
+# Endpoint to run tests for a specific snippet
+@app.post("/run-tests", response_model=str)
+async def run_tests(snippet_id: int):
+    snippet = next((s for s in snippets_db if s.id == snippet_id), None)
+    if snippet is None:
+        raise HTTPException(status_code=404, detail="Snippet not found")
+    if snippet.language == 'python':
+        # Extract the code and stored tests
+        code = snippet.code
+        tests = snippet.tests
+        if not tests:
+            raise HTTPException(status_code=400, detail="No tests available for this snippet")
+
+        # Combine the code and tests
+        code_with_tests = f"{code}\n{tests}"
+
+        try:
+            # Execute the code and tests
+            exec_globals = {}
+            exec(code_with_tests, exec_globals)
+        except Exception as e:
+            return str(e)
+
+        return "Tests executed successfully"
+    else:
+        return "Supported only for python language"
+    

@@ -135,7 +135,6 @@
                     snippet = await response.json();
                     isNewSnippet = false;
                 }
-
                 loadSnippets();
                 codeDisplay.textContent = snippet.code;
                 hljs.highlightAll();
@@ -273,10 +272,21 @@
                 hljs.highlightAll();
             });
 
+            document.getElementById("run-tests-btn").addEventListener("click", async () => {
+                if (selectedSnippetId === null) {
+                    alert("Please select a snippet first.");
+                    return;
+                }
+                const response = await fetch(`/run-tests?snippet_id=${selectedSnippetId}`, {
+                    method: "POST"
+                });
+                const result = await response.text();
+                testResult.textContent = result;
+                testResult.style.display = "block";
+            });
+
             loadSnippets();
         });
     </script>
-
 </body>
-
 </html>
