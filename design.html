@@ -124,8 +124,18 @@
                         body: JSON.stringify({ description, language })
                     });
                     snippet = await response.json();
-                } 
-                
+                } else if (isNewSnippet) {
+                    response = await fetch("/generate", {
+                        method: "POST",
+                        headers: {
+                            "Content-Type": "application/json"
+                        },
+                        body: JSON.stringify({ description, language })
+                    });
+                    snippet = await response.json();
+                    isNewSnippet = false;
+                }
+
                 loadSnippets();
                 codeDisplay.textContent = snippet.code;
                 hljs.highlightAll();
