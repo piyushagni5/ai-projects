@@ -57,7 +57,6 @@ def generate_code(description: str, language: str):
             {"role": "user", "content": f"Generate a {language} code function using following {description}: \n\n Output Code as: \n def function_name(parameters): \n  Generate code below \n\n  Constraints : In the output, do not use any unnecessary lines, backticks and comments. Simply ouput cleaned code. \n"}
         ]
     )
-    print('response:', response.choices[0].message.content)
     generated_def =  utils.extract_function_content(response.choices[0].message.content, language)
     return generated_def
 
@@ -74,7 +73,6 @@ async def generate_snippet(request: SnippetRequest):
 
     language = utils.extract_language(request.description)
     code = generate_code(request.description, language)
-    print('code :', code)
     snippet = Snippet(id=snippet_id_counter, description=request.description, language=request.language, code=code)
     snippets_db.append(snippet)
     snippet_id_counter += 1
@@ -110,7 +108,6 @@ async def update_snippet(snippet_id: int, request: SnippetRequest):
 @app.post("/feedback", response_model=Snippet)
 async def improve_snippet(feedback: Feedback):
     snippet = next((s for s in snippets_db if s.id == feedback.snippet_id), None)
-    print(snippet)
     if snippet is None:
         raise HTTPException(status_code=404, detail="Snippet not found")
 
@@ -133,5 +130,4 @@ async def generate_tests_endpoint(snippet_id: int):
 
     tests = utils.generate_tests(snippet.code, snippet.language)
     snippet.tests = tests
-    # print('tests :', tests)
     return tests
