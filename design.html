@@ -1,99 +1,133 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.4.0/styles/default.min.css">
-    <title>
-        Code Snippet Generator
-    </title>
+    <title>Code Snippet Generator</title>
 </head>
-
 <body>
     <div class="flex">
         <!-- Left Column for Snippets List -->
         <div class="w-1/4 p-4 bg-gray-200">
-            <h2 class="font-bold mb-4">
-                Snippets List
-            </h2>
-            <button class="mb-4 bg-blue-500 text-white px-4 py-2 rounded">
-                Create New Snippet
-            </button>
-            <ul>
-                <li class="flex justify-between mb-4">
-                    <!-- Dark & no delete button because it is selected -->
-                    <a class="w-full block p-2 bg-gray-500 rounded text-white" href="#">
-                        Even Tester | Python
-                    </a>
-                </li>
-                <li class="flex justify-between mb-4">
-                    <a class="w-full block p-2 bg-gray-300 rounded" href="#">
-                        Prime number generator | Javascript
-                    </a>
-                    <!-- Delete icon -->
-                    <button class="bg-red-500 text-white px-2 py-1 rounded">
-                        Delete
-                    </button>
-                </li>
+            <h2 class="font-bold mb-4">Snippets List</h2>
+            <button class="mb-4 bg-blue-500 text-white px-4 py-2 rounded" id="create-snippet-btn">Create New Snippet</button>
+            <ul id="snippets-list">
+                <!-- Dynamically populated -->
             </ul>
         </div>
 
         <!-- Right Column for Editor and Controls -->
         <div class="w-1/2 p-4">
-            <h1 class="text-xl font-bold mb-4">
-                Code Snippet Generator
-            </h1>
-            <textarea placeholder="Describe your code snippet here..."
-                class="w-full p-2 border border-gray-300 rounded mb-4" rows="3"></textarea>
-            <button class="w-full bg-green-500 text-white px-4 py-2 rounded mb-4">
-                Generate Code
-            </button>
+            <h1 class="text-xl font-bold mb-4">Code Snippet Generator</h1>
+            <textarea id="description-input" placeholder="Describe your code snippet here..." class="w-full p-2 border border-gray-300 rounded mb-4" rows="3"></textarea>
+            <button class="w-full bg-green-500 text-white px-4 py-2 rounded mb-4" id="generate-code-btn">Generate Code</button>
 
-            <!-- Simple Code Highlighter Placeholder for Python -->
-            <pre class="mb-2"><code class="python">def is_even(n):
-    return n % 2</code></pre>
-            <div class="flex justify-between mb-4">
-                <input type="text" placeholder="Provide feedback for regenerating code..."
-                    class="flex-grow mr-2 p-2 border border-gray-300 rounded">
-                <button class="bg-blue-500 text-white px-4 py-2 rounded">
-                    Improve Code
-                </button>
+            <!-- Code Display -->
+            <div id="code-content" style="display: none;">
+                <pre id="code-display" class="mb-2"><code class="language-python"></code></pre>
+
+                <div class="flex justify-between mb-4">
+                    <input id="feedback-input" type="text" placeholder="Provide feedback for regenerating code..." class="flex-grow mr-2 p-2 border border-gray-300 rounded">
+                    <button class="bg-blue-500 text-white px-4 py-2 rounded" id="improve-code-btn">Improve Code</button>
+                </div>
+
+                <button class="w-full bg-purple-500 text-white px-4 py-2 rounded mb-4" id="generate-tests-btn">Generate Test Cases</button>
+
+                <!-- Fancy HR -->
+                <hr class="mb-4 border-t-2 border-gray-300">
+
+                <!-- Test Display -->
+                <pre id="test-display" class="mb-2"><code class="language-python"></code></pre>
+
+                <div class="flex justify-between mb-4">
+                    <input id="test-feedback-input" type="text" placeholder="Provide feedback for regenerating test cases..." class="flex-grow mr-2 p-2 border border-gray-300 rounded">
+                    <button class="bg-blue-500 text-white px-4 py-2 rounded" id="improve-tests-btn">Improve Tests</button>
+                </div>
+                <button class="w-full bg-teal-500 text-white px-4 py-2 rounded mb-4" id="run-tests-btn">Run Test Code</button>
+                <div id="test-result" class="bg-green-300 p-4 rounded mb-4" style="display:none;">
+                    Code Executed Successfully
+                </div>
+                <button class="w-full bg-gray-500 text-white px-4 py-2 rounded mb-4" id="regenerate-btn" disabled>Regenerate (Enabled when failed; Send failed feedback to Regenerate)</button>
             </div>
-            <button class="w-full bg-purple-500 text-white px-4 py-2 rounded mb-4">
-                Generate Test Cases
-            </button>
-
-            <!-- Fancy HR -->
-            <hr class="mb-4 border-t-2 border-gray-300">
-
-            <!-- Simple Code Highlighter Placeholder for Test Cases -->
-            <pre class="mb-2"><code class="python">assert is_even(8) == True
-assert is_even(3) == False</code></pre>
-
-            <div class="flex justify-between mb-4">
-                <input type="text" placeholder="Provide feedback for regenerating test cases..."
-                    class="flex-grow mr-2 p-2 border border-gray-300 rounded">
-                <button class="bg-blue-500 text-white px-4 py-2 rounded">
-                    Improve Tests
-                </button>
-            </div>
-            <button class="w-full bg-teal-500 text-white px-4 py-2 rounded mb-4">
-                Run Test Code
-            </button>
-            <div class="bg-green-300 p-4 rounded mb-4">
-                Code Executed Successfully
-            </div>
-            <button class="w-full bg-gray-500 text-white px-4 py-2 rounded mb-4" disabled>
-                Regenerate (Enabled when failed; Send failed feedback to Regenerate)
-            </button>
         </div>
     </div>
 
     <!-- Include Highlight.js Library -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
     <script>hljs.highlightAll();</script>
+    <script>
+        document.addEventListener("DOMContentLoaded", function() {
+            const snippetsList = document.getElementById("snippets-list");
+            const descriptionInput = document.getElementById("description-input");
+            const codeDisplay = document.getElementById("code-display");
+            const testDisplay = document.getElementById("test-display");
+            const testResult = document.getElementById("test-result");
+            const regenerateBtn = document.getElementById("regenerate-btn");
+            const feedbackInput = document.getElementById("feedback-input");
+            const testFeedbackInput = document.getElementById("test-feedback-input");
+            const codeContent = document.getElementById("code-content");
+            let selectedSnippetId = null;
+            let previousSelectedSnippet = null;
+
+            const loadSnippets = async () => {
+                const response = await fetch("/snippets");
+                const snippets = await response.json();
+                snippetsList.innerHTML = "";
+                snippets.forEach(snippet => {
+                    const snippetItem = document.createElement("li");
+                    snippetItem.className = "flex justify-between mb-4";
+                    snippetItem.innerHTML = `
+                        <a class="snippet-link w-full block p-2 bg-gray-300 rounded" href="#" data-id="${snippet.id}">
+                            ${snippet.description} | ${snippet.language}
+                        </a>
+                        <button class="delete-btn bg-red-500 text-white px-2 py-1 rounded" data-id="${snippet.id}">Delete</button>
+                    `;
+                    snippetsList.appendChild(snippetItem);
+                });
+            };
+
+            const extractLanguage = (description) => {
+                const languages = ["python", "javascript", "ruby"];
+                for (const lang of languages) {
+                    if (description.toLowerCase().includes(lang)) {
+                        return lang;
+                    }
+                }
+                return "python"; // default language
+            };
+
+            document.getElementById("generate-code-btn").addEventListener("click", async () => {
+                const description = descriptionInput.value;
+                const language = extractLanguage(description);
+                const response = await fetch("/generate", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json"
+                    },
+                    body: JSON.stringify({ description, language })
+                });
+                const snippet = await response.json();
+                loadSnippets();
+                codeDisplay.textContent = snippet.code;
+                hljs.highlightAll();
+                selectedSnippetId = snippet.id;
+
+                // Display the code content section
+                codeContent.style.display = "block";
+
+                // Clear the feedback inputs and test display
+                feedbackInput.value = "";
+                testFeedbackInput.value = "";
+                testDisplay.textContent = "";
+                testResult.textContent = "";
+                testResult.style.display = "none";
+            });
+            loadSnippets();
+        });
+    </script>
+
 </body>
 
 </html>
