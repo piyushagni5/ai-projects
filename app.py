@@ -55,22 +55,27 @@ snippet_id_counter = 1
 
 # Utility function to generate code
 def generate_code(description: str, language: str):
-    response = openai.chat.completions.create(
-        model="gpt-3.5-turbo",
-        messages=[
-            {"role": "system", "content": "You are a helpful assistant."},
-            {"role": "user", "content": f"Generate a {language} code function using following {description}: \n\n Output Code as: \n def function_name(parameters): \n  Generate code below \n\n  Constraints : In the output, do not use any unnecessary lines, backticks and comments. Simply ouput cleaned code. \n"}
-        ]
-    )
-    generated_def =  utils.extract_function_content(response.choices[0].message.content, language)
-    return generated_def
-
+    try:
+        response = openai.chat.completions.create(
+            model="gpt-3.5-turbo",
+            messages=[
+                {"role": "system", "content": "You are a helpful assistant."},
+                {"role": "user", "content": f"Generate a {language} code function using following {description}: \n\n Output Code as: \n def function_name(parameters): \n  Generate code below \n\n  Constraints : In the output, do not use any unnecessary lines, backticks and comments. Simply ouput cleaned code. \n"}
+            ]
+        )
+        generated_def =  utils.extract_function_content(response.choices[0].message.content, language)
+        return generated_def
+    except Exception as e:
+        return str(e)
+    
 # Serve the HTML file
-
 @app.get("/", response_class=HTMLResponse)
 async def get_home():
-    return FileResponse('design.html')
-
+    try:
+        return FileResponse('design.html')
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+    
 # API Endpoints
 @app.post("/generate", response_model=Snippet)
 async def generate_snippet(request: SnippetRequest):
@@ -95,6 +100,15 @@ async def get_snippet(snippet_id: int):
         if snippet.id == snippet_id:
             return snippet
     raise HTTPException(status_code=404, detail="Snippet not found")
+
+@app.delete("/snippets/{snippet_id}", response_model=Snippet)
+async def delete_snippet(snippet_id: int):
+    global snippets_db
+    snippet = next((s for s in snippets_db if s.id == snippet_id), None)
+    if snippet is None:
+        raise HTTPException(status_code=404, detail="Snippet not found")
+    snippets_db = [s for s in snippets_db if s.id != snippet_id]
+    return snippet
 
 @app.put("/snippets/{snippet_id}", response_model=Snippet)
 async def update_snippet(snippet_id: int, request: SnippetRequest):
@@ -140,7 +154,6 @@ async def generate_tests_endpoint(snippet_id: int):
 @app.post("/test-case-feedback", response_model=str)
 async def improve_snippet(feedback: TestCaseFeedback):
     snippet = next((s for s in snippets_db if s.id == feedback.snippet_id), None)
-    print(snippet)
     if snippet is None:
         raise HTTPException(status_code=404, detail="Snippet not found")
 
