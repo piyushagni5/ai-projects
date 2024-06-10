@@ -70,6 +70,7 @@
             const codeContent = document.getElementById("code-content");
             let selectedSnippetId = null;
             let previousSelectedSnippet = null;
+            let isNewSnippet = false;
 
             const loadSnippets = async () => {
                 const response = await fetch("/snippets");
@@ -101,14 +102,30 @@
             document.getElementById("generate-code-btn").addEventListener("click", async () => {
                 const description = descriptionInput.value;
                 const language = extractLanguage(description);
-                const response = await fetch("/generate", {
-                    method: "POST",
-                    headers: {
-                        "Content-Type": "application/json"
-                    },
-                    body: JSON.stringify({ description, language })
-                });
-                const snippet = await response.json();
+                let response, snippet;
+
+                const snippetsCount = snippetsList.children.length;
+
+                if (snippetsCount === 0) {
+                    response = await fetch("/generate", {
+                        method: "POST",
+                        headers: {
+                            "Content-Type": "application/json"
+                        },
+                        body: JSON.stringify({ description, language })
+                    });
+                    snippet = await response.json();
+                } else if (selectedSnippetId !== null) {
+                    response = await fetch(`/snippets/${selectedSnippetId}`, {
+                        method: "PUT",
+                        headers: {
+                            "Content-Type": "application/json"
+                        },
+                        body: JSON.stringify({ description, language })
+                    });
+                    snippet = await response.json();
+                } 
+                
                 loadSnippets();
                 codeDisplay.textContent = snippet.code;
                 hljs.highlightAll();
@@ -124,6 +141,93 @@
                 testResult.textContent = "";
                 testResult.style.display = "none";
             });
+
+            document.getElementById("create-snippet-btn").addEventListener("click", () => {
+                // Clear description input
+                descriptionInput.value = "";
+
+                // Reset code display and feedback inputs
+                codeDisplay.textContent = "";
+                feedbackInput.value = "";
+                testDisplay.textContent = "";
+                testFeedbackInput.value = "";
+
+                // Hide the test result and code content section
+                testResult.style.display = "none";
+                codeContent.style.display = "none";
+
+                // Reset the previously selected snippet
+                selectedSnippetId = null;
+                if (previousSelectedSnippet) {
+                    previousSelectedSnippet.classList.remove("bg-blue-300");
+                    previousSelectedSnippet.classList.add("bg-gray-300");
+                    previousSelectedSnippet.nextElementSibling.style.display = "block";
+                }
+                previousSelectedSnippet = null;
+
+                // Set flag for new snippet
+                isNewSnippet = true;
+            });
+
+            snippetsList.addEventListener("click", async (event) => {
+                if (event.target.classList.contains("delete-btn")) {
+                    const snippetId = event.target.dataset.id;
+                    await fetch(`/snippets/${snippetId}`, {
+                        method: "DELETE"
+                    });
+                    loadSnippets();
+                } else if (event.target.classList.contains("snippet-link")) {
+                    event.preventDefault();
+                    const snippetId = event.target.dataset.id;
+                    const response = await fetch(`/snippets/${snippetId}`, {
+                        method: "GET"
+                    });
+                    const snippet = await response.json();
+                    descriptionInput.value = snippet.description || "";
+                    codeDisplay.textContent = snippet.code || "";
+                    testDisplay.textContent = "";
+                    testFeedbackInput.value = ""; // Clear the test feedback input
+                    testResult.textContent = "";
+                    testResult.style.display = "none";
+                    hljs.highlightAll();
+                    selectedSnippetId = snippet.id;
+
+                    // Highlight the selected snippet and hide its delete button
+                    document.querySelectorAll(".snippet-link").forEach(link => {
+                        link.classList.remove("bg-blue-300");
+                        link.classList.add("bg-gray-300");
+                    });
+                    event.target.classList.remove("bg-gray-300");
+                    event.target.classList.add("bg-blue-300");
+
+                    document.querySelectorAll(".delete-btn").forEach(button => {
+                        button.style.display = "block";
+                    });
+                    event.target.nextElementSibling.style.display = "none";
+
+                    // Display the code content section
+                    codeContent.style.display = "block";
+                }
+            });
+
+            document.getElementById("improve-code-btn").addEventListener("click", async () => {
+                if (selectedSnippetId === null) {
+                    alert("Please select a snippet first.");
+                    return;
+                }
+                const feedback = feedbackInput.value;
+                const response = await fetch("/feedback", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json"
+                    },
+                    body: JSON.stringify({ snippet_id: selectedSnippetId, feedback, language: "English" })
+                });
+                const snippet = await response.json();
+                codeDisplay.textContent = snippet.code;
+                hljs.highlightAll();
+            });
+
             loadSnippets();
         });
     </script>

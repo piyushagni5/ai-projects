@@ -35,6 +35,11 @@ class Snippet(BaseModel):
     description: str
     language: str
     code: str
+    
+class Feedback(BaseModel):
+    snippet_id: int
+    feedback: str
+    language: str
 
 # In-memory database
 snippets_db = []
@@ -52,7 +57,7 @@ def generate_code(description: str, language: str):
         ]
     )
     print('response:', response.choices[0].message.content)
-    generated_def = response.choices[0].message.content
+    generated_def =  utils.extract_function_content(response.choices[0].message.content, language)
     return generated_def
 
 # Serve the HTML file
@@ -86,3 +91,35 @@ async def get_snippet(snippet_id: int):
         if snippet.id == snippet_id:
             return snippet
     raise HTTPException(status_code=404, detail="Snippet not found")
+
+@app.put("/snippets/{snippet_id}", response_model=Snippet)
+async def update_snippet(snippet_id: int, request: SnippetRequest):
+    snippet = next((s for s in snippets_db if s.id == snippet_id), None)
+    if snippet is None:
+        raise HTTPException(status_code=404, detail="Snippet not found")
+
+    language = utils.extract_language(request.description)
+    code = generate_code(request.description, language)
+    snippet.description = request.description
+    snippet.language = language
+    snippet.code = code
+
+    return snippet
+
+@app.post("/feedback", response_model=Snippet)
+async def improve_snippet(feedback: Feedback):
+    snippet = next((s for s in snippets_db if s.id == feedback.snippet_id), None)
+    print(snippet)
+    if snippet is None:
+        raise HTTPException(status_code=404, detail="Snippet not found")
+
+    response = openai.chat.completions.create(
+        model="gpt-3.5-turbo",
+        messages=[
+            {"role": "system", "content": "You are a helpful assistant."},
+            {"role": "user", "content": f"Improve the following {snippet.language} code based on this feedback: {feedback.feedback}\n\n{snippet.code}"}
+        ]
+    )
+    improved_code = utils.extract_function_content(response.choices[0].message.content, snippet.language)
+    snippet.code = improved_code
+    return snippet
