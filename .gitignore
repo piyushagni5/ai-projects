@@ -162,5 +162,4 @@ cython_debug/
 #  option (not recommended) you can uncomment the following to ignore the entire idea folder.
 #.idea/
 
-auth_token.py
-projects/text-to-img/api/auth_token.py
+projects/text-to-img/api/config.py

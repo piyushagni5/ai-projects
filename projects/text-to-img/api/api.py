@@ -5,7 +5,7 @@ import sys
 from diffusers import StableDiffusionPipeline
 # print("diffusers is installed and can be imported")
 
-from auth_token import auth_token
+from config import auth_token
 from fastapi import FastAPI, Response
 from fastapi.middleware.cors import CORSMiddleware
 import torch
