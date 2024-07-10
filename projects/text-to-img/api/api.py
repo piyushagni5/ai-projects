@@ -13,6 +13,8 @@ from torch import autocast
 from io import BytesIO
 import base64 
 # from diffusers import StableDiffusionPipeline
+import os
+os.environ['HF_HUB_DISABLE_SSL_VERIFY'] = '1'
 
 app = FastAPI()
 
